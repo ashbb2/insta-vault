@@ -5,6 +5,14 @@ import { StatusBar } from 'expo-status-bar'
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://bespoke-gumdrop-af2c79.netlify.app'
 
+const CATEGORY_OPTIONS = [
+  { id: 'c-unsorted', label: 'Unsorted' },
+  { id: 'c-photo', label: 'Photography' },
+  { id: 'c-food', label: 'Food' },
+  { id: 'c-design', label: 'Design' },
+  { id: 'c-travel', label: 'Travel' }
+]
+
 type SaveResponse = {
   ok?: boolean
   error?: string
@@ -27,6 +35,7 @@ function isValidHttpUrl(value: string) {
 
 export default function App() {
   const [url, setUrl] = useState('')
+  const [categoryId, setCategoryId] = useState('c-unsorted')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SaveResponse | null>(null)
 
@@ -51,7 +60,7 @@ export default function App() {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: candidate })
+        body: JSON.stringify({ url: candidate, categoryId })
       })
 
       const data = (await response.json()) as SaveResponse
@@ -87,6 +96,23 @@ export default function App() {
           placeholderTextColor="#94a3b8"
           style={styles.input}
         />
+
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.categoryWrap}>
+          {CATEGORY_OPTIONS.map((category) => {
+            const active = category.id === categoryId
+            return (
+              <TouchableOpacity
+                key={category.id}
+                style={[styles.categoryChip, active && styles.categoryChipActive]}
+                onPress={() => setCategoryId(category.id)}
+                disabled={loading}
+              >
+                <Text style={[styles.categoryChipText, active && styles.categoryChipTextActive]}>{category.label}</Text>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
 
         <View style={styles.actionsRow}>
           <TouchableOpacity style={[styles.button, styles.secondary]} onPress={handlePaste} disabled={loading}>
@@ -149,6 +175,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 4
+  },
+  categoryWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  categoryChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  categoryChipActive: {
+    backgroundColor: '#dbeafe',
+    borderColor: '#60a5fa'
+  },
+  categoryChipText: {
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  categoryChipTextActive: {
+    color: '#1e3a8a'
   },
   button: {
     flex: 1,

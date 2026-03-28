@@ -126,6 +126,7 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const rawUrl = String(body?.url || '').trim()
+    const rawCategoryId = typeof body?.categoryId === 'string' ? body.categoryId.trim() : ''
 
     if (!isValidHttpUrl(rawUrl)) {
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
       caption: meta.caption,
       transcript: meta.transcript ?? undefined,
       sourceUrl: rawUrl,
-      categoryId: 'c-unsorted',
+      categoryId: rawCategoryId || 'c-unsorted',
       collectionIds: [],
       tags: [],
       savedAt: new Date().toISOString()

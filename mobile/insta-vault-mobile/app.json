@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Insta Vault",
+    "slug": "insta-vault-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.instavault.mobile"
+    },
+    "android": {
+      "package": "com.instavault.mobile"
+    }
+  }
+}

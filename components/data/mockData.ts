@@ -2,11 +2,11 @@ import type { Post, Category, Collection } from '../../types/data.d'
 
 // Categories (include Unsorted)
 export const categories: Category[] = [
-  { id: 'c-unsorted', name: 'Unsorted' },
-  { id: 'c-photo', name: 'Photography' },
-  { id: 'c-food', name: 'Food' },
-  { id: 'c-design', name: 'Design' },
-  { id: 'c-travel', name: 'Travel' }
+  { id: 'c-unsorted', name: 'Unsorted', icon: '📋' },
+  { id: 'c-photo', name: 'Photography', icon: '📸' },
+  { id: 'c-food', name: 'Food', icon: '🍳' },
+  { id: 'c-design', name: 'Design', icon: '✦' },
+  { id: 'c-travel', name: 'Travel', icon: '✈️' }
 ]
 
 export const collections: Collection[] = [

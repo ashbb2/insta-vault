@@ -97,74 +97,83 @@ export default function ImportPageClient() {
   }, [initialUrl])
 
   return (
-    <div className="max-w-xl mx-auto">
-      <div className="bg-white border border-slate-200 rounded-lg p-4 md:p-6 shadow-sm">
-        <h1 className="text-xl md:text-2xl font-semibold">Quick Save Link</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Paste a post link and save it to your vault in one step.
-        </p>
-
-        <div className="mt-4 flex flex-col gap-2">
-          <label htmlFor="import-url" className="text-xs font-medium text-slate-700">Post URL</label>
-          <input
-            id="import-url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://instagram.com/p/..."
-            className="w-full border rounded-md px-3 py-2 text-sm"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-          />
+    <div className="flex flex-col h-screen bg-vault-bg overflow-hidden max-w-[430px] mx-auto">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-5 py-8">
+        {/* Header */}
+        <div className="mb-1">
+          <div className="text-[22px] font-semibold tracking-[-0.5px] text-vault-text mb-1">
+            vault<span className="text-vault-accent">.</span>
+          </div>
+          <div className="font-mono text-[12px] text-vault-text3">save a link</div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void importAndSave()}
-            disabled={loading}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm disabled:opacity-60"
-          >
-            {loading ? 'Importing...' : 'Import and Save'}
-          </button>
-          <button
-            type="button"
-            onClick={resetForAnother}
-            className="px-4 py-2 rounded-md border border-slate-300 text-sm"
-          >
-            Clear
-          </button>
+        <div className="mt-8 bg-vault-surface border border-vault-border2 rounded-2xl p-[14px] mb-4">
+          <div className="flex gap-2">
+            <input
+              id="import-url"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="paste your link..."
+              className="flex-1 bg-vault-surface2 border border-vault-border rounded-[10px] px-3 py-[9px] text-[13px] text-vault-text font-mono outline-none placeholder:text-vault-text3"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              onKeyDown={e => { if (e.key === 'Enter') void importAndSave() }}
+            />
+            <button
+              type="button"
+              onClick={() => void importAndSave()}
+              disabled={loading}
+              className="bg-vault-accent text-white rounded-[10px] px-[14px] text-[11px] font-mono disabled:opacity-50 flex-shrink-0"
+            >
+              {loading ? '...' : 'save'}
+            </button>
+          </div>
+
+          {importedPost && (
+            <div className="flex gap-[10px] items-start mt-[10px] bg-vault-surface2 rounded-[10px] p-[10px]">
+              {importedPost.thumbnail ? (
+                <img
+                  src={importedPost.thumbnail}
+                  alt=""
+                  className="w-[38px] h-[38px] rounded-[9px] object-cover flex-shrink-0 border border-vault-border"
+                />
+              ) : (
+                <div className="w-[38px] h-[38px] rounded-[9px] bg-vault-surface border border-vault-border flex items-center justify-center flex-shrink-0 text-xl">📎</div>
+              )}
+              <p className="text-[12px] text-vault-text2 leading-[1.5] line-clamp-2">{importedPost.caption}</p>
+            </div>
+          )}
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="font-mono text-[12px] text-red-600 mb-4 px-1">{error}</p>
+        )}
 
         {importedPost && (
-          <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3">
-            <p className="text-sm font-medium text-emerald-800">Saved successfully</p>
-            <p className="mt-1 text-sm text-emerald-700 line-clamp-2">{importedPost.caption}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={openSavedPost}
-                className="px-3 py-1.5 rounded-md bg-emerald-700 text-white text-sm"
-              >
-                Open vault
-              </button>
-              <button
-                type="button"
-                onClick={resetForAnother}
-                className="px-3 py-1.5 rounded-md border border-emerald-300 text-emerald-900 text-sm"
-              >
-                Save another link
-              </button>
-            </div>
+          <div className="flex flex-col gap-2 mb-4">
+            <button
+              type="button"
+              onClick={openSavedPost}
+              className="w-full bg-vault-accent text-white rounded-xl py-3 text-sm font-medium"
+            >
+              open vault
+            </button>
+            <button
+              type="button"
+              onClick={resetForAnother}
+              className="w-full bg-vault-surface border border-vault-border text-vault-text2 rounded-xl py-3 text-sm font-mono"
+            >
+              save another
+            </button>
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t border-slate-200 text-xs text-slate-500 space-y-1">
-          <p>iPhone flow: Share - Copy Link - open this page - paste - Import and Save.</p>
-          <p>Shortcut URL format: /import?url=&lt;encoded_link&gt;</p>
-        </div>
+        {!importedPost && !loading && (
+          <p className="font-mono text-[11px] text-vault-text3 px-1 leading-relaxed">
+            share any link from your iPhone → copy link → paste here → save
+          </p>
+        )}
       </div>
     </div>
   )

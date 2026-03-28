@@ -2,42 +2,42 @@
 import React from 'react'
 import { usePosts } from './PostsProvider'
 
-export default function BottomNav({ openAdd }: { openAdd?: () => void }) {
-  const { setActiveCategory, setActiveCollection, activeCategoryId, activeCollectionId } = usePosts()
+export default function BottomNav() {
+  const { activeCategoryId, setActiveCategory, setActiveCollection, setAddOpen } = usePosts()
+
+  const isHome = !activeCategoryId
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 flex justify-between items-center py-2 px-4">
-      <div className="flex gap-4">
-        <button
-          onClick={() => { setActiveCategory(null); setActiveCollection(null) }}
-          className={`flex flex-col items-center text-xs ${!activeCategoryId && !activeCollectionId ? 'text-slate-900' : 'text-slate-600'}`}>
-          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h18M3 17h18"/></svg>
-          All
-        </button>
+    <nav className="h-[72px] bg-vault-surface border-t border-vault-border flex items-center justify-around px-5 pb-2 flex-shrink-0">
+      {/* Home */}
+      <button
+        onClick={() => { setActiveCategory(null); setActiveCollection(null) }}
+        className={`flex flex-col items-center gap-1 transition-opacity ${isHome ? 'opacity-100' : 'opacity-[0.28]'}`}
+      >
+        <svg
+          width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke={isHome ? '#7C2D3E' : 'currentColor'} strokeWidth="1.8"
+        >
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        <span className={`font-mono text-[10px] ${isHome ? 'text-vault-accent' : 'text-vault-text2'}`}>home</span>
+      </button>
 
-        <button
-          onClick={() => { setActiveCategory('c-unsorted'); setActiveCollection(null) }}
-          className={`flex flex-col items-center text-xs ${activeCategoryId === 'c-unsorted' ? 'text-slate-900' : 'text-slate-600'}`}>
-          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4z"/></svg>
-          Cats
-        </button>
-      </div>
-
-      <div className="flex gap-4 items-center">
-        <button
-          onClick={() => openAdd && openAdd()}
-          className="flex flex-col items-center text-xs text-slate-900">
-          <svg className="w-8 h-8 mb-1 rounded-full bg-slate-900 text-white p-1" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-          Add
-        </button>
-
-        <button
-          onClick={() => { /* profile nav placeholder */ }}
-          className={`flex flex-col items-center text-xs ${false ? 'text-slate-900' : 'text-slate-600'}`}>
-          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM6 20v-1c0-2.21 3.58-4 6-4s6 1.79 6 4v1"/></svg>
-          Profile
-        </button>
-      </div>
+      {/* Add */}
+      <button
+        onClick={() => setAddOpen(true)}
+        className="flex flex-col items-center gap-1 opacity-[0.28] hover:opacity-100 transition-opacity"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 8v8M8 12h8"/>
+        </svg>
+        <span className="font-mono text-[10px] text-vault-text2">add</span>
+      </button>
     </nav>
   )
 }
+

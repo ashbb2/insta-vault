@@ -30,6 +30,8 @@ type PostsContextValue = {
   addCollection: (name: string, description?: string) => Collection
   updateCollection: (id: string, updates: Partial<Collection>) => void
   deleteCollection: (id: string, reassignToId?: string) => boolean
+  addOpen: boolean
+  setAddOpen: (v: boolean) => void
 }
 
 const PostsContext = createContext<PostsContextValue | undefined>(undefined)
@@ -41,12 +43,21 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
   const [searchText, setSearchText] = useState<string>('')
   const [sortOption, setSortOption] = useState<SortOption>('newest')
   const [isHydrated, setIsHydrated] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
 
   const [posts, setPosts] = useState<Post[]>(() => mockPosts)
   const [categories, setCategories] = useState<Category[]>(() => mockCategories)
   const [collections, setCollections] = useState<Collection[]>(() => mockCollections)
 
   const cloudSyncEnabled = process.env.NEXT_PUBLIC_ENABLE_CLOUD_SYNC === '1'
+
+  // Merge loaded categories with default icons so stored data keeps icon info
+  function enrichCategories(loaded: Category[]): Category[] {
+    return loaded.map(cat => ({
+      ...cat,
+      icon: cat.icon ?? mockCategories.find(m => m.id === cat.id)?.icon
+    }))
+  }
 
   // Hydrate from cloud state first when enabled, then fall back to local storage.
   useEffect(() => {
@@ -61,7 +72,7 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
             const state = json?.state
             if (state?.posts && state?.categories && state?.collections && !cancelled) {
               setPosts(state.posts)
-              setCategories(state.categories)
+              setCategories(enrichCategories(state.categories))
               setCollections(state.collections)
               return
             }
@@ -71,14 +82,14 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
         const saved = localRepo.loadAll()
         if (saved && !cancelled) {
           setPosts(saved.posts)
-          setCategories(saved.categories)
+          setCategories(enrichCategories(saved.categories))
           setCollections(saved.collections)
         }
       } catch (e) {
         const saved = localRepo.loadAll()
         if (saved && !cancelled) {
           setPosts(saved.posts)
-          setCategories(saved.categories)
+          setCategories(enrichCategories(saved.categories))
           setCollections(saved.collections)
         }
       } finally {
@@ -240,7 +251,9 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     searchText,
     setSearchText,
     sortOption,
-    setSortOption
+    setSortOption,
+    addOpen,
+    setAddOpen
   }
 
   return <PostsContext.Provider value={value}>{children}</PostsContext.Provider>

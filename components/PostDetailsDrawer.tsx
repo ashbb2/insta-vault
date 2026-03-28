@@ -7,32 +7,33 @@ export default function PostDetailsDrawer() {
   const { posts, selectedPostId, setSelectedPostId, categories, collections, updatePost, deletePost } = usePosts()
   const post = useMemo(() => posts.find((p) => p.id === selectedPostId) ?? null, [posts, selectedPostId])
 
+  const [editMode, setEditMode] = useState(false)
   const [local, setLocal] = useState<Partial<Post> | null>(null)
-  const [showTranscript, setShowTranscript] = useState(false)
   const [tagsInput, setTagsInput] = useState('')
 
   useEffect(() => {
-    if (post) setLocal({ ...post })
-    else setLocal(null)
-    // initialize tags input string when post changes
-    setTagsInput((post?.tags ?? []).join(', '))
+    if (post) {
+      setLocal({ ...post })
+      setTagsInput((post.tags ?? []).join(', '))
+    } else {
+      setLocal(null)
+      setEditMode(false)
+    }
   }, [post])
 
   if (!post || !local) return null
 
-  const unsaved = (() => {
+  const category = categories.find(c => c.id === post.categoryId)
+
+  const hasChanges = (() => {
     if (!local) return false
-    const base = Object.keys(local).some((k) => {
-      // @ts-ignore
-      return (post as any)[k] !== (local as any)[k]
-    })
-    const tagsStr = (post.tags ?? []).join(', ')
-    return base || tagsInput !== tagsStr
+    const base = Object.keys(local).some(k => (post as any)[k] !== (local as any)[k])
+    return base || tagsInput !== (post.tags ?? []).join(', ')
   })()
 
   function handleSave() {
     if (!post || !local) return
-    const parsedTags = tagsInput.split(',').map((s) => s.trim()).filter(Boolean)
+    const parsedTags = tagsInput.split(',').map(s => s.trim()).filter(Boolean)
     const updated: Post = {
       id: local.id ?? post.id,
       thumbnail: local.thumbnail ?? post.thumbnail,
@@ -48,7 +49,7 @@ export default function PostDetailsDrawer() {
       editedAt: new Date().toISOString()
     }
     updatePost(updated)
-    setSelectedPostId(null)
+    setEditMode(false)
   }
 
   function handleDelete() {
@@ -58,88 +59,182 @@ export default function PostDetailsDrawer() {
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-lg z-50 overflow-auto">
-      <div className="p-4 border-b flex items-start justify-between">
-        <div>
-          <div className="text-lg font-semibold">Post Details</div>
-          {unsaved && <div className="text-xs text-amber-600">Unsaved changes</div>}
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="px-3 py-1 rounded border" onClick={() => setSelectedPostId(null)}>Close</button>
-          <button className="px-3 py-1 rounded bg-slate-800 text-white" onClick={handleSave}>Save</button>
-        </div>
+    <div className="fixed inset-0 z-50 bg-vault-bg flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-5 pt-4 pb-3 flex-shrink-0">
+        <button
+          onClick={() => setSelectedPostId(null)}
+          className="w-[34px] h-[34px] bg-vault-surface border border-vault-border rounded-full flex items-center justify-center flex-shrink-0"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6966" strokeWidth="2">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+        <span className="font-mono text-sm text-vault-text2 flex-1">
+          {category?.icon ?? '📁'} {category?.name ?? ''}
+        </span>
+        <button
+          onClick={() => { editMode ? setEditMode(false) : setEditMode(true) }}
+          className={`font-mono text-[11px] px-3 py-1.5 rounded-lg border transition-colors ${
+            editMode
+              ? 'bg-vault-accent-bg border-vault-accent-border text-vault-accent'
+              : 'bg-vault-surface border-vault-border text-vault-text2'
+          }`}
+        >
+          {editMode ? 'done' : 'edit'}
+        </button>
       </div>
 
-      <div className="p-4 space-y-4">
-        <img src={post.thumbnail} className="w-full h-64 object-cover rounded" />
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-6">
 
-        <div>
-          <label className="text-xs text-slate-500">Instagram URL</label>
-          <input className="w-full border px-2 py-2 rounded mt-1" value={local.sourceUrl ?? ''} onChange={(e) => setLocal({ ...local, sourceUrl: e.target.value })} />
-        </div>
-
-        <div>
-          <label className="text-xs text-slate-500">Caption</label>
-          <textarea className="w-full border px-2 py-2 rounded mt-1" value={local.caption ?? ''} onChange={(e) => setLocal({ ...local, caption: e.target.value })} />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between">
-            <label className="text-xs text-slate-500">Transcript</label>
-            <button className="text-xs text-slate-600" onClick={() => setShowTranscript((s) => !s)}>{showTranscript ? 'Hide' : 'Show'}</button>
-          </div>
-          {showTranscript && (
-            <textarea className="w-full border px-2 py-2 rounded mt-1" value={local.transcript ?? ''} onChange={(e) => setLocal({ ...local, transcript: e.target.value })} />
+        {/* Hero image */}
+        <div className="w-full h-[150px] rounded-2xl bg-vault-accent-bg border border-vault-accent-border flex items-center justify-center mb-4 overflow-hidden">
+          {post.thumbnail ? (
+            <img
+              src={post.thumbnail}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          ) : (
+            <span className="text-5xl">{category?.icon ?? '📎'}</span>
           )}
         </div>
 
-        <div>
-          <label className="text-xs text-slate-500">Notes</label>
-          <textarea className="w-full border px-2 py-2 rounded mt-1" value={local.notes ?? ''} onChange={(e) => setLocal({ ...local, notes: e.target.value })} />
+        {/* Author / title */}
+        <div className="text-[17px] font-medium text-vault-text leading-[1.4] mb-2">
+          {post.author}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-slate-500">Category</label>
-            <select className="w-full border px-2 py-2 rounded mt-1" value={local.categoryId} onChange={(e) => setLocal({ ...local, categoryId: e.target.value })}>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+        {/* Caption */}
+        {!editMode ? (
+          <p className="text-sm text-vault-text2 leading-[1.7] mb-4">
+            {post.caption || <span className="text-vault-text3 italic">No caption</span>}
+          </p>
+        ) : (
+          <textarea
+            className="w-full bg-vault-surface border border-vault-border2 rounded-xl px-3 py-2.5 text-sm text-vault-text outline-none mb-3 resize-none font-sans"
+            rows={4}
+            value={local.caption ?? ''}
+            onChange={e => setLocal({ ...local, caption: e.target.value })}
+            placeholder="Caption..."
+          />
+        )}
 
-          <div>
-            <label className="text-xs text-slate-500">Collections</label>
-            <div className="mt-1 space-y-1 max-h-28 overflow-auto">
-              {collections.map((col) => (
-                <label key={col.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={local.collectionIds?.includes(col.id) ?? false} onChange={(e) => {
-                    const checked = e.target.checked
-                    const prev = local.collectionIds ?? []
-                    const next = checked ? [...prev, col.id] : prev.filter((id) => id !== col.id)
-                    setLocal({ ...local, collectionIds: next })
-                  }} />
-                  {col.name}
-                </label>
-              ))}
+        {/* Tags */}
+        {!editMode ? (
+          post.tags && post.tags.length > 0 && (
+            <div className="mb-4">
+              <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-2">tags</div>
+              <div className="flex flex-wrap gap-1.5">
+                {post.tags.map(t => (
+                  <span key={t} className="font-mono text-[10px] px-[7px] py-[2px] rounded-full bg-vault-accent-bg text-vault-accent border border-vault-accent-border">
+                    {t}
+                  </span>
+                ))}
+              </div>
             </div>
+          )
+        ) : (
+          <div className="mb-3">
+            <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-1.5">tags (comma separated)</div>
+            <input
+              className="w-full bg-vault-surface border border-vault-border2 rounded-xl px-3 py-2.5 text-sm text-vault-text outline-none font-sans"
+              value={tagsInput}
+              onChange={e => setTagsInput(e.target.value)}
+              placeholder="recipe, quick, healthy"
+            />
           </div>
-        </div>
+        )}
 
-        <div>
-          <label className="text-xs text-slate-500">Tags (comma separated)</label>
-          <input className="w-full border px-2 py-2 rounded mt-1" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} />
-        </div>
+        {/* Edit-mode extra fields */}
+        {editMode && (
+          <>
+            <div className="mb-3">
+              <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-1.5">category</div>
+              <select
+                className="w-full bg-vault-surface border border-vault-border2 rounded-xl px-3 py-2.5 text-sm text-vault-text outline-none font-sans"
+                value={local.categoryId}
+                onChange={e => setLocal({ ...local, categoryId: e.target.value })}
+              >
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-slate-500">Saved: {new Date(post.savedAt).toLocaleString()}</div>
-          <div className="text-xs text-slate-500">Edited: {post.editedAt ? new Date(post.editedAt).toLocaleString() : '—'}</div>
-        </div>
+            <div className="mb-3">
+              <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-1.5">notes</div>
+              <textarea
+                className="w-full bg-vault-surface border border-vault-border2 rounded-xl px-3 py-2.5 text-sm text-vault-text outline-none font-sans resize-none"
+                rows={3}
+                value={local.notes ?? ''}
+                onChange={e => setLocal({ ...local, notes: e.target.value })}
+                placeholder="Your notes..."
+              />
+            </div>
+          </>
+        )}
 
-        <div className="pt-4 border-t">
-          <button className="px-3 py-2 rounded bg-red-600 text-white" onClick={handleDelete}>Delete Post</button>
+        {/* Notes (read mode) */}
+        {!editMode && post.notes && (
+          <div className="mb-4">
+            <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-1.5">notes</div>
+            <p className="text-sm text-vault-text2 leading-[1.6]">{post.notes}</p>
+          </div>
+        )}
+
+        {/* Open link button */}
+        {post.sourceUrl && (
+          <a
+            href={post.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full bg-vault-accent text-white rounded-xl py-[13px] text-sm font-medium mb-4"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            open original link
+          </a>
+        )}
+
+        {/* Save / Delete in edit mode */}
+        {editMode && (
+          <div className="flex gap-3 mt-4 pt-4 border-t border-vault-border">
+            {hasChanges && (
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-vault-accent text-white rounded-xl py-3 text-sm font-medium"
+              >
+                save changes
+              </button>
+            )}
+            <button
+              onClick={handleDelete}
+              className="flex-1 bg-vault-surface border border-vault-border text-vault-text3 rounded-xl py-3 text-sm font-mono"
+            >
+              delete
+            </button>
+          </div>
+        )}
+
+        {/* Metadata */}
+        <div className="mt-4 mb-2 flex justify-between">
+          <span className="font-mono text-[10px] text-vault-text3">
+            saved {new Date(post.savedAt).toLocaleDateString()}
+          </span>
+          {post.editedAt && (
+            <span className="font-mono text-[10px] text-vault-text3">
+              edited {new Date(post.editedAt).toLocaleDateString()}
+            </span>
+          )}
         </div>
       </div>
     </div>
   )
 }
+

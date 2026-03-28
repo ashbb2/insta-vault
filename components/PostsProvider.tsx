@@ -25,6 +25,7 @@ type PostsContextValue = {
   sortOption: SortOption
   setSortOption: (s: SortOption) => void
   addCategory: (name: string, icon?: string) => Category
+  updateCategory: (id: string, updates: Partial<Category>) => void
   renameCategory: (id: string, name: string) => void
   deleteCategory: (id: string, reassignToId?: string) => boolean
   addCollection: (name: string, description?: string) => Collection
@@ -208,6 +209,10 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     setCategories((s) => s.map((c) => (c.id === id ? { ...c, name } : c)))
   }
 
+  function updateCategory(id: string, updates: Partial<Category>) {
+    setCategories((s) => s.map((c) => (c.id === id ? { ...c, ...updates } : c)))
+  }
+
   function deleteCategory(id: string, reassignToId?: string) {
     if (id === 'c-unsorted') return false
     const inUse = posts.some((p) => p.categoryId === id)
@@ -263,6 +268,7 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     updatePost,
     deletePost,
     addCategory,
+    updateCategory,
     renameCategory,
     deleteCategory,
     addCollection,

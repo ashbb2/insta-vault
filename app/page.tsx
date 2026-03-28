@@ -11,13 +11,17 @@ export default function Page() {
     posts, filteredPosts,
     activeCategoryId, setActiveCategory,
     categories, searchText, setSearchText,
-    setAddOpen, addCategory
+    setAddOpen, addCategory, updateCategory, deleteCategory
   } = usePosts()
 
   const [catDropOpen, setCatDropOpen] = useState(false)
   const [addCatOpen, setAddCatOpen] = useState(false)
+  const [manageCatOpen, setManageCatOpen] = useState(false)
   const [newCatName, setNewCatName] = useState('')
   const [newCatIcon, setNewCatIcon] = useState('📁')
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editingCategoryName, setEditingCategoryName] = useState('')
+  const [editingCategoryIcon, setEditingCategoryIcon] = useState('📁')
 
   function postCountForCat(catId: string) {
     if (!searchText) return posts.filter(p => p.categoryId === catId).length
@@ -42,7 +46,43 @@ export default function Page() {
     setActiveCategory(cat.id)
   }
 
+  function beginCategoryEdit(categoryId: string) {
+    const category = categories.find(c => c.id === categoryId)
+    if (!category) return
+    setEditingCategoryId(category.id)
+    setEditingCategoryName(category.name)
+    setEditingCategoryIcon(category.icon ?? '📁')
+  }
+
+  function openCategoryManager() {
+    const initialId = activeCategoryId ?? categories[0]?.id
+    if (initialId) beginCategoryEdit(initialId)
+    setManageCatOpen(true)
+  }
+
+  function closeCategoryManager() {
+    setManageCatOpen(false)
+    setEditingCategoryId(null)
+    setEditingCategoryName('')
+    setEditingCategoryIcon('📁')
+  }
+
+  function handleSaveCategoryEdit() {
+    const name = editingCategoryName.trim()
+    if (!editingCategoryId || !name) return
+    updateCategory(editingCategoryId, { name, icon: editingCategoryIcon })
+  }
+
+  function handleDeleteCategory() {
+    if (!editingCategoryId || editingCategoryId === 'c-unsorted') return
+    const deleted = deleteCategory(editingCategoryId, 'c-unsorted')
+    if (!deleted) return
+    if (activeCategoryId === editingCategoryId) setActiveCategory('c-unsorted')
+    beginCategoryEdit('c-unsorted')
+  }
+
   const activeCategory = categories.find(c => c.id === activeCategoryId)
+  const editingCategory = categories.find(c => c.id === editingCategoryId)
 
   const visibleCategories = searchText
     ? categories.filter(c =>
@@ -138,9 +178,17 @@ export default function Page() {
           <div className="text-[22px] font-semibold tracking-[-0.5px] text-vault-text">
             vault<span className="text-vault-accent">.</span>
           </div>
-          <span className="font-mono text-[11px] text-vault-accent bg-vault-accent-bg border border-vault-accent-border px-[10px] py-[3px] rounded-full">
-            {posts.length} saved
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openCategoryManager}
+              className="font-mono text-[11px] text-vault-text2 bg-vault-surface border border-vault-border px-[10px] py-[3px] rounded-full"
+            >
+              edit categories
+            </button>
+            <span className="font-mono text-[11px] text-vault-accent bg-vault-accent-bg border border-vault-accent-border px-[10px] py-[3px] rounded-full">
+              {posts.length} saved
+            </span>
+          </div>
         </div>
 
         {/* Search */}
@@ -175,13 +223,13 @@ export default function Page() {
               <button
                 key={c.id}
                 onClick={() => setActiveCategory(c.id)}
-                className="bg-vault-surface border border-vault-border rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-vault-accent-border transition-colors min-h-[100px] cursor-pointer"
+                className="relative bg-vault-surface border border-vault-border rounded-2xl px-4 py-3 flex flex-col gap-1.5 text-left hover:border-vault-accent-border transition-colors min-h-[82px] cursor-pointer"
               >
-                <span className="text-[22px] leading-none">{c.icon ?? '📁'}</span>
-                <span className="font-medium text-[13px] text-vault-text">{c.name}</span>
-                <span className="font-mono text-[10px] text-vault-text3 mt-auto">
-                  {postCountForCat(c.id)} saved
+                <span className="absolute right-3 top-3 min-w-[22px] h-[22px] px-1.5 rounded-full border border-vault-border bg-vault-surface2 font-mono text-[10px] text-vault-text2 flex items-center justify-center">
+                  {postCountForCat(c.id)}
                 </span>
+                <span className="text-[20px] leading-none">{c.icon ?? '📁'}</span>
+                <span className="font-medium text-[13px] leading-[1.2] text-vault-text pr-7">{c.name}</span>
               </button>
             ))}
 
@@ -189,9 +237,9 @@ export default function Page() {
             {!searchText && (
               <button
                 onClick={() => setAddCatOpen(true)}
-                className="bg-vault-surface border border-dashed border-vault-border2 rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-vault-accent-border transition-colors min-h-[100px] cursor-pointer items-start"
+                className="bg-vault-surface border border-dashed border-vault-border2 rounded-2xl px-4 py-3 flex flex-col gap-1.5 text-left hover:border-vault-accent-border transition-colors min-h-[82px] cursor-pointer items-start"
               >
-                <span className="text-[22px] leading-none opacity-40">+</span>
+                <span className="text-[20px] leading-none opacity-40">+</span>
                 <span className="font-medium text-[13px] text-vault-text3">add category</span>
               </button>
             )}
@@ -259,6 +307,105 @@ export default function Page() {
             >
               create category
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Categories Modal */}
+      {manageCatOpen && (
+        <div className="fixed inset-0 z-50 bg-vault-bg/90 flex items-end justify-center">
+          <div className="w-full max-w-[430px] max-h-[88vh] bg-vault-surface rounded-t-3xl border-t border-vault-border px-5 pt-5 pb-8 flex flex-col">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="font-semibold text-[17px] text-vault-text">edit categories</div>
+              <button
+                onClick={closeCategoryManager}
+                className="w-8 h-8 bg-vault-surface2 border border-vault-border rounded-full flex items-center justify-center"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6966" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-2">select category</div>
+              <div className="flex flex-col gap-1.5 mb-5">
+                {categories.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => beginCategoryEdit(c.id)}
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl border text-left transition-colors ${
+                      editingCategoryId === c.id
+                        ? 'border-vault-accent bg-vault-accent-bg'
+                        : 'border-vault-border bg-vault-surface2'
+                    }`}
+                  >
+                    <span className="text-sm w-[28px] h-[28px] rounded-lg bg-vault-surface flex items-center justify-center flex-shrink-0">
+                      {c.icon ?? '📁'}
+                    </span>
+                    <span className="text-sm font-medium text-vault-text flex-1">{c.name}</span>
+                    <span className="font-mono text-[10px] text-vault-text3">{postCountForCat(c.id)}</span>
+                  </button>
+                ))}
+              </div>
+
+              {editingCategory && (
+                <>
+                  <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-1.5">name</div>
+                  <input
+                    className="w-full bg-vault-surface2 border border-vault-border2 rounded-xl px-3 py-3 text-sm text-vault-text font-sans outline-none placeholder:text-vault-text3 mb-4"
+                    value={editingCategoryName}
+                    onChange={e => setEditingCategoryName(e.target.value)}
+                    placeholder="Category name"
+                  />
+
+                  <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-2">icon</div>
+                  <div className="flex gap-2 flex-wrap mb-5">
+                    {EMOJI_SUGGESTIONS.map(emoji => (
+                      <button
+                        key={`edit-${emoji}`}
+                        onClick={() => setEditingCategoryIcon(emoji)}
+                        className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center border transition-colors ${
+                          editingCategoryIcon === emoji
+                            ? 'border-vault-accent bg-vault-accent-bg'
+                            : 'border-vault-border bg-vault-surface2'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                    <input
+                      className="w-9 h-9 rounded-xl border border-vault-border bg-vault-surface2 text-center text-lg outline-none"
+                      placeholder="✏️"
+                      value={!EMOJI_SUGGESTIONS.includes(editingCategoryIcon) ? editingCategoryIcon : ''}
+                      maxLength={2}
+                      onChange={e => { if (e.target.value) setEditingCategoryIcon(e.target.value) }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSaveCategoryEdit}
+                    disabled={!editingCategoryName.trim()}
+                    className="w-full bg-vault-accent text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40"
+                  >
+                    save category
+                  </button>
+
+                  {editingCategory.id !== 'c-unsorted' ? (
+                    <button
+                      onClick={handleDeleteCategory}
+                      className="w-full mt-2 bg-vault-surface border border-vault-border text-vault-text2 rounded-xl py-3 text-sm font-mono"
+                    >
+                      delete category
+                    </button>
+                  ) : (
+                    <div className="mt-3 font-mono text-[11px] text-vault-text3 leading-relaxed">
+                      unsorted is permanent. posts from deleted categories move here.
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

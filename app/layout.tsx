@@ -1,10 +1,11 @@
-import { Sora, JetBrains_Mono } from 'next/font/google'
+import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
+import type { Viewport } from 'next'
 import '../styles/globals.css'
 import AppShell from '../components/AppShell'
 
-const sora = Sora({
+const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
-  variable: '--font-sora',
+  variable: '--font-sans-ui',
   weight: ['400', '500', '600']
 })
 
@@ -19,9 +20,15 @@ export const metadata = {
   description: 'Your personal content vault'
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover'
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sora.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${instrumentSans.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans bg-vault-bg">
         <AppShell>{children}</AppShell>
       </body>

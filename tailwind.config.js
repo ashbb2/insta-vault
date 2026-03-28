@@ -21,7 +21,7 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-sora)', 'Sora', 'sans-serif'],
+        sans: ['var(--font-sans-ui)', 'Instrument Sans', 'Helvetica Neue', 'Arial', 'sans-serif'],
         mono: ['var(--font-mono)', 'JetBrains Mono', 'monospace'],
       }
     }

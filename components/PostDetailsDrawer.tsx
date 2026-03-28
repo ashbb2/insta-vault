@@ -33,8 +33,16 @@ export default function PostDetailsDrawer() {
   function handleSave() {
     const parsedTags = tagsInput.split(',').map((s) => s.trim()).filter(Boolean)
     const updated: Post = {
-      ...post,
-      ...local,
+      id: local.id ?? post.id,
+      thumbnail: local.thumbnail ?? post.thumbnail,
+      author: local.author ?? post.author,
+      caption: local.caption ?? post.caption,
+      categoryId: local.categoryId ?? post.categoryId,
+      collectionIds: local.collectionIds ?? post.collectionIds,
+      savedAt: local.savedAt ?? post.savedAt,
+      transcript: local.transcript,
+      notes: local.notes,
+      sourceUrl: local.sourceUrl,
       tags: parsedTags,
       editedAt: new Date().toISOString()
     }

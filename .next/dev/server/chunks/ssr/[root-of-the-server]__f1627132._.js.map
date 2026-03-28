@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///Users/aishwaryabhattbhatt/Desktop/Vibe%20Code%20Projects/insta-vault/app/page.tsx"],"sourcesContent":["import AppShell from '../components/AppShell'\n\nexport default function Page() {\n  return (\n    <div className=\"p-8\">\n      <h1 className=\"text-2xl font-semibold\">All Posts</h1>\n      <div className=\"mt-6 border-2 border-dashed border-slate-200 rounded-lg p-8 text-slate-500\">\n        Empty content area — add posts to get started.\n      </div>\n    </div>\n  )\n}\n"],"names":[],"mappings":";;;;;;AAEe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;gBAAG,WAAU;0BAAyB;;;;;;0BACvC,8OAAC;gBAAI,WAAU;0BAA6E;;;;;;;;;;;;AAKlG"}}]
+}

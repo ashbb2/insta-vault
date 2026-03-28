@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id    String  @id
+  name  String
+  posts Post[]  @relation("PostCategory", fields: [id], references: [categoryId])
+}
+
+model Collection {
+  id          String   @id
+  name        String
+  description String?
+  posts       Post[]   @relation("PostCollections", references: [id])
+}
+
+model Tag {
+  id   String  @id
+  name String  @unique
+  posts PostTag[]
+}
+
+model Post {
+  id            String   @id
+  thumbnail     String
+  author        String
+  caption       String
+  transcript    String?
+  notes         String?
+  sourceUrl     String?
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  savedAt       DateTime
+  editedAt      DateTime?
+  collections   PostCollection[]
+  tags          PostTag[]
+}
+
+model PostCollection {
+  id           String  @id @default(cuid())
+  post         Post    @relation(fields: [postId], references: [id])
+  postId       String
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  collectionId String
+}
+
+model PostTag {
+  id     String @id @default(cuid())
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [id])
+  tagId  String
+}

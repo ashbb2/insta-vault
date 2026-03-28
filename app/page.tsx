@@ -3,15 +3,21 @@ import React, { useState } from 'react'
 import { usePosts } from '../components/PostsProvider'
 import PostCard from '../components/PostCard'
 
+// Common emoji suggestions for new categories
+const EMOJI_SUGGESTIONS = ['📁','🎵','💪','📚','🌿','🎮','✈️','💡','🏠','🛍','🎨','💼','🌍','🏋️','🍕']
+
 export default function Page() {
   const {
     posts, filteredPosts,
     activeCategoryId, setActiveCategory,
     categories, searchText, setSearchText,
-    setAddOpen
+    setAddOpen, addCategory
   } = usePosts()
 
   const [catDropOpen, setCatDropOpen] = useState(false)
+  const [addCatOpen, setAddCatOpen] = useState(false)
+  const [newCatName, setNewCatName] = useState('')
+  const [newCatIcon, setNewCatIcon] = useState('📁')
 
   function postCountForCat(catId: string) {
     if (!searchText) return posts.filter(p => p.categoryId === catId).length
@@ -24,6 +30,16 @@ export default function Page() {
         (p.notes ?? '').toLowerCase().includes(q)
       )
     ).length
+  }
+
+  function handleCreateCategory() {
+    const name = newCatName.trim()
+    if (!name) return
+    const cat = addCategory(name, newCatIcon)
+    setNewCatName('')
+    setNewCatIcon('📁')
+    setAddCatOpen(false)
+    setActiveCategory(cat.id)
   }
 
   const activeCategory = categories.find(c => c.id === activeCategoryId)
@@ -168,9 +184,84 @@ export default function Page() {
                 </span>
               </button>
             ))}
+
+            {/* Add category tile — only visible when not searching */}
+            {!searchText && (
+              <button
+                onClick={() => setAddCatOpen(true)}
+                className="bg-vault-surface border border-dashed border-vault-border2 rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-vault-accent-border transition-colors min-h-[100px] cursor-pointer items-start"
+              >
+                <span className="text-[22px] leading-none opacity-40">+</span>
+                <span className="font-medium text-[13px] text-vault-text3">add category</span>
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      {/* Add Category Modal */}
+      {addCatOpen && (
+        <div className="fixed inset-0 z-50 bg-vault-bg/90 flex items-end justify-center">
+          <div className="w-full max-w-[430px] bg-vault-surface rounded-t-3xl border-t border-vault-border px-5 pt-5 pb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="font-semibold text-[17px] text-vault-text">new category</div>
+              <button
+                onClick={() => { setAddCatOpen(false); setNewCatName(''); setNewCatIcon('📁') }}
+                className="w-8 h-8 bg-vault-surface2 border border-vault-border rounded-full flex items-center justify-center"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6966" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Name input */}
+            <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-1.5">name</div>
+            <input
+              autoFocus
+              className="w-full bg-vault-surface2 border border-vault-border2 rounded-xl px-3 py-3 text-sm text-vault-text font-sans outline-none placeholder:text-vault-text3 mb-4"
+              placeholder="e.g. Travel, Books, Work..."
+              value={newCatName}
+              onChange={e => setNewCatName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateCategory() }}
+            />
+
+            {/* Icon picker */}
+            <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-2">icon</div>
+            <div className="flex gap-2 flex-wrap mb-5">
+              {EMOJI_SUGGESTIONS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => setNewCatIcon(emoji)}
+                  className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center border transition-colors ${
+                    newCatIcon === emoji
+                      ? 'border-vault-accent bg-vault-accent-bg'
+                      : 'border-vault-border bg-vault-surface2'
+                  }`}
+                >
+                  {emoji}
+                </button>
+              ))}
+              {/* Custom emoji input */}
+              <input
+                className="w-9 h-9 rounded-xl border border-vault-border bg-vault-surface2 text-center text-lg outline-none"
+                placeholder="✏️"
+                value={!EMOJI_SUGGESTIONS.includes(newCatIcon) ? newCatIcon : ''}
+                maxLength={2}
+                onChange={e => { if (e.target.value) setNewCatIcon(e.target.value) }}
+              />
+            </div>
+
+            <button
+              onClick={handleCreateCategory}
+              disabled={!newCatName.trim()}
+              className="w-full bg-vault-accent text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40"
+            >
+              create category
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* FAB */}
       <button

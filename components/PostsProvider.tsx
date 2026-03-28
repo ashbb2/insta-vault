@@ -24,7 +24,7 @@ type PostsContextValue = {
   setSearchText: (s: string) => void
   sortOption: SortOption
   setSortOption: (s: SortOption) => void
-  addCategory: (name: string) => Category
+  addCategory: (name: string, icon?: string) => Category
   renameCategory: (id: string, name: string) => void
   deleteCategory: (id: string, reassignToId?: string) => boolean
   addCollection: (name: string, description?: string) => Collection
@@ -51,12 +51,26 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
 
   const cloudSyncEnabled = process.env.NEXT_PUBLIC_ENABLE_CLOUD_SYNC === '1'
 
-  // Merge loaded categories with default icons so stored data keeps icon info
+  // IDs from previous default data set that should no longer exist.
+  const DEPRECATED_CATEGORY_IDS = new Set(['c-photo', 'c-food', 'c-design', 'c-travel'])
+
+  // Remove deprecated categories, backfill icons, and ensure all current mockCategories are present.
   function enrichCategories(loaded: Category[]): Category[] {
-    return loaded.map(cat => ({
+    const filtered = loaded.filter(cat => !DEPRECATED_CATEGORY_IDS.has(cat.id))
+    const withIcons = filtered.map(cat => ({
       ...cat,
       icon: cat.icon ?? mockCategories.find(m => m.id === cat.id)?.icon
     }))
+    const loadedIds = new Set(withIcons.map(c => c.id))
+    const missing = mockCategories.filter(m => !loadedIds.has(m.id))
+    return [...withIcons, ...missing]
+  }
+
+  // Reassign any posts whose categoryId was removed by the migration.
+  function migratePosts(loadedPosts: Post[], validCategoryIds: Set<string>): Post[] {
+    return loadedPosts.map(p =>
+      validCategoryIds.has(p.categoryId) ? p : { ...p, categoryId: 'c-unsorted' }
+    )
   }
 
   // Hydrate from cloud state first when enabled, then fall back to local storage.
@@ -71,8 +85,10 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
             const json = await response.json()
             const state = json?.state
             if (state?.posts && state?.categories && state?.collections && !cancelled) {
-              setPosts(state.posts)
-              setCategories(enrichCategories(state.categories))
+              const enriched = enrichCategories(state.categories)
+              const validIds = new Set(enriched.map((c: Category) => c.id))
+              setPosts(migratePosts(state.posts, validIds))
+              setCategories(enriched)
               setCollections(state.collections)
               return
             }
@@ -81,15 +97,19 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
 
         const saved = localRepo.loadAll()
         if (saved && !cancelled) {
-          setPosts(saved.posts)
-          setCategories(enrichCategories(saved.categories))
+          const enriched = enrichCategories(saved.categories)
+          const validIds = new Set(enriched.map(c => c.id))
+          setPosts(migratePosts(saved.posts, validIds))
+          setCategories(enriched)
           setCollections(saved.collections)
         }
       } catch (e) {
         const saved = localRepo.loadAll()
         if (saved && !cancelled) {
-          setPosts(saved.posts)
-          setCategories(enrichCategories(saved.categories))
+          const enriched = enrichCategories(saved.categories)
+          const validIds = new Set(enriched.map(c => c.id))
+          setPosts(migratePosts(saved.posts, validIds))
+          setCategories(enriched)
           setCollections(saved.collections)
         }
       } finally {
@@ -175,11 +195,11 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     setPosts((s) => s.map((p) => (p.id === post.id ? post : p)))
   }
 
-  function addCategory(name: string) {
+  function addCategory(name: string, icon?: string) {
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '')
     let id = `c-${slug}`
     if (categories.some((c) => c.id === id)) id = `c-${Date.now()}`
-    const cat: Category = { id, name }
+    const cat: Category = { id, name, icon }
     setCategories((s) => [...s, cat])
     return cat
   }

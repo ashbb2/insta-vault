@@ -84,12 +84,7 @@ export default function Page() {
   const activeCategory = categories.find(c => c.id === activeCategoryId)
   const editingCategory = categories.find(c => c.id === editingCategoryId)
 
-  const visibleCategories = searchText
-    ? categories.filter(c =>
-        c.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        postCountForCat(c.id) > 0
-      )
-    : categories
+  const showingSearchResults = searchText.trim().length > 0
 
   // ── CATEGORY VIEW ───────────────────────────────────────────────
   if (activeCategoryId) {
@@ -213,17 +208,28 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Category grid */}
+      {/* Home content */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-4">
-        {visibleCategories.length === 0 ? (
-          <div className="text-center font-mono text-sm text-vault-text3 py-10">nothing found</div>
+        {showingSearchResults ? (
+          filteredPosts.length === 0 ? (
+            <div className="text-center font-mono text-sm text-vault-text3 py-10">nothing found</div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="text-[12px] text-vault-text3 px-1 pb-1">
+                all posts · {filteredPosts.length}
+              </div>
+              {filteredPosts.map(p => (
+                <PostCard key={p.id} post={p} />
+              ))}
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            {visibleCategories.map(c => (
+            {categories.map(c => (
               <button
                 key={c.id}
                 onClick={() => setActiveCategory(c.id)}
-                className="relative bg-vault-surface border border-vault-border rounded-2xl px-4 py-3 flex flex-col gap-1.5 text-left hover:border-vault-accent-border transition-colors min-h-[82px] cursor-pointer"
+                className="relative bg-vault-surface border border-vault-border rounded-2xl px-4 py-3 flex flex-col gap-1 text-left hover:border-vault-accent-border transition-colors cursor-pointer"
               >
                 <span className="absolute right-3 top-3 min-w-[22px] h-[22px] px-1.5 rounded-full border border-vault-border bg-vault-surface2 font-mono text-[10px] text-vault-text2 flex items-center justify-center">
                   {postCountForCat(c.id)}
@@ -233,16 +239,13 @@ export default function Page() {
               </button>
             ))}
 
-            {/* Add category tile — only visible when not searching */}
-            {!searchText && (
-              <button
-                onClick={() => setAddCatOpen(true)}
-                className="bg-vault-surface border border-dashed border-vault-border2 rounded-2xl px-4 py-3 flex flex-col gap-1.5 text-left hover:border-vault-accent-border transition-colors min-h-[82px] cursor-pointer items-start"
-              >
-                <span className="text-[20px] leading-none opacity-40">+</span>
-                <span className="font-medium text-[13px] text-vault-text3">add category</span>
-              </button>
-            )}
+            <button
+              onClick={() => setAddCatOpen(true)}
+              className="bg-vault-surface border border-dashed border-vault-border2 rounded-2xl px-4 py-3 flex flex-col gap-1 text-left hover:border-vault-accent-border transition-colors cursor-pointer items-start"
+            >
+              <span className="text-[20px] leading-none opacity-40">+</span>
+              <span className="font-medium text-[13px] text-vault-text3">add category</span>
+            </button>
           </div>
         )}
       </div>

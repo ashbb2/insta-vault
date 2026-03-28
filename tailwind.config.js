@@ -22,7 +22,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['var(--font-sans-ui)', 'Instrument Sans', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        mono: ['var(--font-mono)', 'JetBrains Mono', 'monospace'],
+        mono: ['var(--font-sans-ui)', 'Instrument Sans', 'Helvetica Neue', 'Arial', 'sans-serif'],
       }
     }
   },

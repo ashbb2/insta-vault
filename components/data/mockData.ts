@@ -1,4 +1,4 @@
-import type { Post, Category, Collection } from '../../../types/data.d'
+import type { Post, Category, Collection } from '../../types/data.d'
 
 // Categories (include Unsorted)
 export const categories: Category[] = [

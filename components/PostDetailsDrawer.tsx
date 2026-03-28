@@ -31,6 +31,7 @@ export default function PostDetailsDrawer() {
   })()
 
   function handleSave() {
+    if (!post || !local) return
     const parsedTags = tagsInput.split(',').map((s) => s.trim()).filter(Boolean)
     const updated: Post = {
       id: local.id ?? post.id,
@@ -51,6 +52,7 @@ export default function PostDetailsDrawer() {
   }
 
   function handleDelete() {
+    if (!post) return
     if (!confirm('Delete this post?')) return
     deletePost(post.id)
   }

@@ -11,7 +11,7 @@ export default function Page() {
     posts, filteredPosts,
     activeCategoryId, setActiveCategory,
     categories, searchText, setSearchText,
-    setAddOpen, addCategory, updateCategory, deleteCategory
+    setAddOpen, setAddModalCategoryId, addCategory, updateCategory, deleteCategory
   } = usePosts()
 
   const [catDropOpen, setCatDropOpen] = useState(false)
@@ -224,27 +224,32 @@ export default function Page() {
             </div>
           )
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-2">
             {categories.map(c => (
               <button
                 key={c.id}
                 onClick={() => setActiveCategory(c.id)}
-                className="relative bg-vault-surface border border-vault-border rounded-2xl px-4 py-3 flex flex-col gap-1 text-left hover:border-vault-accent-border transition-colors cursor-pointer"
+                className="bg-vault-surface border border-vault-border rounded-xl px-3 py-2.5 flex items-center gap-3 text-left hover:border-vault-accent-border transition-colors cursor-pointer"
               >
-                <span className="absolute right-3 top-3 min-w-[22px] h-[22px] px-1.5 rounded-full border border-vault-border bg-vault-surface2 font-mono text-[10px] text-vault-text2 flex items-center justify-center">
+                <span className="text-[16px] w-[30px] h-[30px] bg-vault-surface2 rounded-lg flex items-center justify-center flex-shrink-0">
+                  {c.icon ?? '📁'}
+                </span>
+                <span className="font-medium text-[13px] text-vault-text flex-1 min-w-0 truncate">{c.name}</span>
+                <span className="min-w-[22px] h-[22px] px-1.5 rounded-full border border-vault-border bg-vault-surface2 font-mono text-[10px] text-vault-text2 flex items-center justify-center flex-shrink-0">
                   {postCountForCat(c.id)}
                 </span>
-                <span className="text-[20px] leading-none">{c.icon ?? '📁'}</span>
-                <span className="font-medium text-[13px] leading-[1.2] text-vault-text pr-7">{c.name}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#AEACA7" strokeWidth="2" className="flex-shrink-0">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
               </button>
             ))}
 
             <button
               onClick={() => setAddCatOpen(true)}
-              className="bg-vault-surface border border-dashed border-vault-border2 rounded-2xl px-4 py-3 flex flex-col gap-1 text-left hover:border-vault-accent-border transition-colors cursor-pointer items-start"
+              className="bg-vault-surface border border-dashed border-vault-border2 rounded-xl px-3 py-2.5 flex items-center gap-3 text-left hover:border-vault-accent-border transition-colors cursor-pointer"
             >
-              <span className="text-[20px] leading-none opacity-40">+</span>
-              <span className="font-medium text-[13px] text-vault-text3">add category</span>
+              <span className="text-[16px] w-[30px] h-[30px] bg-vault-surface2 rounded-lg flex items-center justify-center flex-shrink-0 opacity-60">+</span>
+              <span className="font-medium text-[13px] text-vault-text3 flex-1">add category</span>
             </button>
           </div>
         )}
@@ -415,7 +420,10 @@ export default function Page() {
 
       {/* FAB */}
       <button
-        onClick={() => setAddOpen(true)}
+        onClick={() => {
+          setAddModalCategoryId(activeCategoryId)
+          setAddOpen(true)
+        }}
         className="fixed bottom-[82px] right-5 w-[50px] h-[50px] bg-vault-accent rounded-full flex items-center justify-center z-10 shadow-md hover:scale-105 transition-transform"
         aria-label="Add post"
       >

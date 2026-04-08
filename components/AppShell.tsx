@@ -6,7 +6,7 @@ import { PostsProvider, usePosts } from './PostsProvider'
 import PostDetailsDrawer from './PostDetailsDrawer'
 
 function AppShellInner({ children }: { children: React.ReactNode }) {
-  const { addOpen, setAddOpen } = usePosts()
+  const { addOpen, setAddOpen, setAddModalCategoryId } = usePosts()
 
   return (
     <div className="flex flex-col h-full bg-vault-bg max-w-[430px] mx-auto relative overflow-hidden">
@@ -15,7 +15,14 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       </main>
       <BottomNav />
       <PostDetailsDrawer />
-      <AddPostModal open={addOpen} onClose={() => setAddOpen(false)} onImported={() => {}} />
+      <AddPostModal
+        open={addOpen}
+        onClose={() => {
+          setAddOpen(false)
+          setAddModalCategoryId(null)
+        }}
+        onImported={() => {}}
+      />
     </div>
   )
 }

@@ -33,6 +33,8 @@ type PostsContextValue = {
   deleteCollection: (id: string, reassignToId?: string) => boolean
   addOpen: boolean
   setAddOpen: (v: boolean) => void
+  addModalCategoryId: string | null
+  setAddModalCategoryId: (id: string | null) => void
 }
 
 const PostsContext = createContext<PostsContextValue | undefined>(undefined)
@@ -45,6 +47,7 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
   const [sortOption, setSortOption] = useState<SortOption>('newest')
   const [isHydrated, setIsHydrated] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [addModalCategoryId, setAddModalCategoryId] = useState<string | null>(null)
 
   const [posts, setPosts] = useState<Post[]>(() => mockPosts)
   const [categories, setCategories] = useState<Category[]>(() => mockCategories)
@@ -279,7 +282,9 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     sortOption,
     setSortOption,
     addOpen,
-    setAddOpen
+    setAddOpen,
+    addModalCategoryId,
+    setAddModalCategoryId
   }
 
   return <PostsContext.Provider value={value}>{children}</PostsContext.Provider>

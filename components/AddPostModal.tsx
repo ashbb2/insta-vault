@@ -1,11 +1,11 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ImportAdapter } from './ImportAdapter'
 import { usePosts } from './PostsProvider'
 import type { Post } from '../types/data.d'
 
 export default function AddPostModal({ open, onClose, onImported }: { open: boolean; onClose: () => void; onImported?: (p: Post) => void }) {
-  const { addPost, categories } = usePosts()
+  const { addPost, categories, addModalCategoryId } = usePosts()
 
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,6 +19,13 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [showSaved, setShowSaved] = useState(false)
+  const [showCategoryPicker, setShowCategoryPicker] = useState(true)
+
+  useEffect(() => {
+    if (!open) return
+    setCategoryId(addModalCategoryId ?? 'c-unsorted')
+    setShowCategoryPicker(!addModalCategoryId)
+  }, [open, addModalCategoryId])
 
   if (!open) return null
 
@@ -34,6 +41,7 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
     setTags([])
     setTagInput('')
     setShowSaved(false)
+    setShowCategoryPicker(true)
   }
 
   async function handleImport() {
@@ -90,6 +98,8 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
   }
 
   const hasPreview = !!previewCaption
+  const selectedCategory = categories.find(c => c.id === categoryId)
+  const isContextLockedCategory = !!addModalCategoryId
 
   if (showSaved) {
     const cat = categories.find(c => c.id === categoryId)
@@ -160,27 +170,51 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
         </div>
 
         {/* Category */}
-        <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-2">category</div>
-        <div className="grid grid-cols-2 gap-1.5 mb-[14px]">
-          {categories.map(c => (
+        <div className="flex items-center justify-between mb-2">
+          <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px]">category</div>
+          {isContextLockedCategory && (
             <button
-              key={c.id}
-              onClick={() => setCategoryId(c.id)}
-              className={`flex items-center gap-2 px-3 py-[9px] rounded-xl border text-[13px] font-medium transition-colors ${
-                categoryId === c.id
-                  ? 'border-vault-accent text-vault-accent bg-vault-accent-bg'
-                  : 'border-vault-border bg-vault-surface text-vault-text2'
-              }`}
+              onClick={() => setShowCategoryPicker(v => !v)}
+              className="font-mono text-[11px] text-vault-accent"
             >
-              <span className={`text-sm w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-                categoryId === c.id ? 'bg-vault-accent-bg' : 'bg-vault-surface2'
-              }`}>
-                {c.icon ?? '📁'}
-              </span>
-              <span className="truncate">{c.name}</span>
+              {showCategoryPicker ? 'done' : 'edit'}
             </button>
-          ))}
+          )}
         </div>
+        {showCategoryPicker ? (
+          <div className="grid grid-cols-2 gap-1.5 mb-[14px]">
+            {categories.map(c => (
+              <button
+                key={c.id}
+                onClick={() => {
+                  setCategoryId(c.id)
+                  if (isContextLockedCategory) setShowCategoryPicker(false)
+                }}
+                className={`flex items-center gap-2 px-3 py-[9px] rounded-xl border text-[13px] font-medium transition-colors ${
+                  categoryId === c.id
+                    ? 'border-vault-accent text-vault-accent bg-vault-accent-bg'
+                    : 'border-vault-border bg-vault-surface text-vault-text2'
+                }`}
+              >
+                <span className={`text-sm w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
+                  categoryId === c.id ? 'bg-vault-accent-bg' : 'bg-vault-surface2'
+                }`}>
+                  {c.icon ?? '📁'}
+                </span>
+                <span className="truncate">{c.name}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mb-[14px]">
+            <div className="flex items-center gap-2 px-3 py-[9px] rounded-xl border border-vault-accent bg-vault-accent-bg text-vault-accent">
+              <span className="text-sm w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 bg-vault-accent-bg">
+                {selectedCategory?.icon ?? '📁'}
+              </span>
+              <span className="text-[13px] font-medium truncate">{selectedCategory?.name ?? 'unsorted'}</span>
+            </div>
+          </div>
+        )}
 
         {/* Tags */}
         <div className="font-mono text-[11px] text-vault-text3 uppercase tracking-[0.4px] mb-2">tags</div>

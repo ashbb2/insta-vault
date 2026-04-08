@@ -3,7 +3,7 @@ import React from 'react'
 import { usePosts } from './PostsProvider'
 
 export default function BottomNav() {
-  const { activeCategoryId, setActiveCategory, setActiveCollection, setAddOpen } = usePosts()
+  const { activeCategoryId, setActiveCategory, setActiveCollection, setAddOpen, setAddModalCategoryId } = usePosts()
 
   const isHome = !activeCategoryId
 
@@ -28,7 +28,10 @@ export default function BottomNav() {
 
       {/* Add */}
       <button
-        onClick={() => setAddOpen(true)}
+        onClick={() => {
+          setAddModalCategoryId(activeCategoryId)
+          setAddOpen(true)
+        }}
         className="flex flex-col items-center gap-1 opacity-[0.28] hover:opacity-100 transition-opacity"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

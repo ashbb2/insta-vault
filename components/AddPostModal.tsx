@@ -305,7 +305,7 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
             />
             <button
-              onClick={addTag}
+              onClick={() => addTag()}
               className="bg-vault-surface2 border border-vault-border rounded-[10px] px-3 font-mono text-[11px] text-vault-text2"
             >
               + add

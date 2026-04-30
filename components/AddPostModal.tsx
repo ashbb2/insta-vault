@@ -1,12 +1,13 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ImportAdapter } from './ImportAdapter'
 import { usePosts } from './PostsProvider'
 import type { Post } from '../types/data.d'
+import { DEFAULT_CATEGORY_COLOR } from '../lib/categoryColors'
 
 export default function AddPostModal({ open, onClose, onImported }: { open: boolean; onClose: () => void; onImported?: (p: Post) => void }) {
-  const { addPost, categories, addModalCategoryId } = usePosts()
 
+  const { addPost, categories, addModalCategoryId } = usePosts()
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [previewCaption, setPreviewCaption] = useState('')
@@ -20,12 +21,28 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
   const [tagInput, setTagInput] = useState('')
   const [showSaved, setShowSaved] = useState(false)
   const [showCategoryPicker, setShowCategoryPicker] = useState(true)
+  const [importError, setImportError] = useState('')
+  const lastImportedUrlRef = useRef('')
 
   useEffect(() => {
     if (!open) return
     setCategoryId(addModalCategoryId ?? 'c-unsorted')
     setShowCategoryPicker(!addModalCategoryId)
   }, [open, addModalCategoryId])
+
+  useEffect(() => {
+    if (!open) return
+    const nextUrl = url.trim()
+    if (!isImportableInstagramUrl(nextUrl)) return
+    if (loading) return
+    if (nextUrl === lastImportedUrlRef.current) return
+
+    const timer = window.setTimeout(() => {
+      void handleImport(nextUrl)
+    }, 280)
+
+    return () => window.clearTimeout(timer)
+  }, [url, open])
 
   if (!open) return null
 
@@ -42,30 +59,64 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
     setTagInput('')
     setShowSaved(false)
     setShowCategoryPicker(true)
+    setImportError('')
+    lastImportedUrlRef.current = ''
   }
 
-  async function handleImport() {
-    if (!url.trim()) return
-    setLoading(true)
+  function isImportableInstagramUrl(value: string) {
+    const trimmed = value.trim()
+    if (!trimmed) return false
     try {
-      const result = await ImportAdapter.importFromInstagramUrl(url.trim())
+      const parsed = new URL(trimmed)
+      const host = parsed.hostname.toLowerCase()
+      return host.includes('instagram.com') && /^https?:$/.test(parsed.protocol)
+    } catch {
+      return false
+    }
+  }
+
+  async function handleImport(sourceUrl?: string) {
+    const targetUrl = (sourceUrl ?? url).trim()
+    if (!targetUrl) return
+    setLoading(true)
+    setImportError('')
+    try {
+      const result = await ImportAdapter.importFromInstagramUrl(targetUrl)
       setPreviewCaption(result.caption)
       setPreviewThumb(result.thumbnail)
       setPreviewAuthor(result.authorHandle)
       setCaption(result.caption)
       setAuthor(result.authorHandle)
       setImageUrl(result.thumbnail)
+      lastImportedUrlRef.current = targetUrl
     } catch {
-      setPreviewCaption('Could not load preview — fill in manually below.')
+      setImportError('Could not load preview — fill in manually below.')
+      setPreviewCaption('')
+      setPreviewThumb('')
+      setPreviewAuthor('')
     } finally {
       setLoading(false)
     }
   }
 
-  function addTag() {
-    const v = tagInput.trim().toLowerCase()
-    if (!v || tags.includes(v)) { setTagInput(''); return }
-    setTags(t => [...t, v])
+  // ...existing code...
+
+  function addTag(input?: string) {
+    const raw = (typeof input === 'string' ? input : tagInput).trim().toLowerCase()
+    if (!raw) { setTagInput(''); return }
+    // Split by comma, filter empty, dedupe with existing tags
+    const newTags = raw.split(',').map(t => t.trim()).filter(Boolean)
+    let added = false
+    setTags(prev => {
+      const unique = [...prev]
+      for (const t of newTags) {
+        if (t && !unique.includes(t)) {
+          unique.push(t)
+          added = true
+        }
+      }
+      return unique
+    })
     setTagInput('')
   }
 
@@ -104,9 +155,12 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
   if (showSaved) {
     const cat = categories.find(c => c.id === categoryId)
     return (
-      <div className="fixed inset-0 z-50 bg-vault-bg/95 flex flex-col items-center justify-center gap-3">
+      <div className="absolute inset-0 z-50 bg-vault-bg/95 flex flex-col items-center justify-center gap-3">
         <div className="w-[52px] h-[52px] rounded-full bg-vault-accent-bg border border-vault-accent-border flex items-center justify-center text-[22px]">
-          {cat?.icon ?? '✓'}
+          <span
+            className="w-[24px] h-[24px] rounded-full border border-white/80"
+            style={{ backgroundColor: cat?.color ?? DEFAULT_CATEGORY_COLOR }}
+          />
         </div>
         <div className="text-[17px] font-medium text-vault-text">saved</div>
         <div className="font-mono text-xs text-vault-text2">{cat?.name ?? 'vault'}</div>
@@ -115,7 +169,7 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-vault-bg flex flex-col overflow-hidden">
+    <div className="absolute inset-0 z-50 bg-vault-bg flex flex-col overflow-hidden">
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-5 pt-4 pb-6">
         {/* Header */}
@@ -138,17 +192,23 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
               className="flex-1 bg-vault-surface2 border border-vault-border rounded-[10px] px-3 py-[9px] text-[13px] text-vault-text font-mono outline-none placeholder:text-vault-text3"
               placeholder="paste your link..."
               value={url}
-              onChange={e => setUrl(e.target.value)}
+              onChange={e => {
+                setUrl(e.target.value)
+                setImportError('')
+              }}
               onKeyDown={e => { if (e.key === 'Enter') handleImport() }}
             />
             <button
-              onClick={handleImport}
+              onClick={() => { void handleImport() }}
               disabled={loading || !url.trim()}
               className="bg-vault-accent text-white rounded-[10px] px-[14px] text-[11px] font-mono disabled:opacity-50 flex-shrink-0"
             >
               {loading ? '...' : 'import'}
             </button>
           </div>
+          {importError && (
+            <p className="mt-2 text-[11px] text-vault-text3">{importError}</p>
+          )}
 
           {/* Preview */}
           {hasPreview && (
@@ -161,7 +221,10 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
                 />
               ) : (
                 <div className="w-[38px] h-[38px] rounded-[9px] bg-vault-surface border border-vault-border flex items-center justify-center flex-shrink-0 text-lg">
-                  {categories.find(c => c.id === categoryId)?.icon ?? '📎'}
+                  <span
+                    className="w-[20px] h-[20px] rounded-full border border-white/80"
+                    style={{ backgroundColor: categories.find(c => c.id === categoryId)?.color ?? DEFAULT_CATEGORY_COLOR }}
+                  />
                 </div>
               )}
               <p className="text-[12px] text-vault-text2 leading-[1.5] line-clamp-2">{previewCaption}</p>
@@ -199,7 +262,10 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
                 <span className={`text-sm w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
                   categoryId === c.id ? 'bg-vault-accent-bg' : 'bg-vault-surface2'
                 }`}>
-                  {c.icon ?? '📁'}
+                  <span
+                    className="w-[14px] h-[14px] rounded-full border border-white/80"
+                    style={{ backgroundColor: c.color ?? DEFAULT_CATEGORY_COLOR }}
+                  />
                 </span>
                 <span className="truncate">{c.name}</span>
               </button>
@@ -209,7 +275,10 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
           <div className="mb-[14px]">
             <div className="flex items-center gap-2 px-3 py-[9px] rounded-xl border border-vault-accent bg-vault-accent-bg text-vault-accent">
               <span className="text-sm w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 bg-vault-accent-bg">
-                {selectedCategory?.icon ?? '📁'}
+                <span
+                  className="w-[14px] h-[14px] rounded-full border border-white/80"
+                  style={{ backgroundColor: selectedCategory?.color ?? DEFAULT_CATEGORY_COLOR }}
+                />
               </span>
               <span className="text-[13px] font-medium truncate">{selectedCategory?.name ?? 'unsorted'}</span>
             </div>
@@ -224,7 +293,15 @@ export default function AddPostModal({ open, onClose, onImported }: { open: bool
               className="flex-1 bg-vault-surface2 border border-vault-border rounded-[10px] px-3 py-2 text-[13px] text-vault-text font-sans outline-none placeholder:text-vault-text3"
               placeholder="add tag..."
               value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
+              onChange={e => {
+                const value = e.target.value
+                // If comma is present, split and add tags immediately
+                if (value.includes(',')) {
+                  addTag(value)
+                } else {
+                  setTagInput(value)
+                }
+              }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
             />
             <button

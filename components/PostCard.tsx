@@ -2,6 +2,7 @@
 import React from 'react'
 import type { Post } from '../types/data.d'
 import { usePosts } from './PostsProvider'
+import { DEFAULT_CATEGORY_COLOR } from '../lib/categoryColors'
 
 export default function PostCard({ post }: { post: Post }) {
   const { setSelectedPostId, categories } = usePosts()
@@ -24,12 +25,15 @@ export default function PostCard({ post }: { post: Post }) {
               el.style.display = 'none'
               const parent = el.parentElement
               if (parent) {
-                parent.innerHTML = `<span style="font-size:22px;line-height:1">${category?.icon ?? '📎'}</span>`
+                parent.innerHTML = `<span style="width:20px;height:20px;border-radius:9999px;border:1px solid rgba(255,255,255,0.8);background:${category?.color ?? DEFAULT_CATEGORY_COLOR};display:inline-block"></span>`
               }
             }}
           />
         ) : (
-          <span className="text-[22px] leading-none">{category?.icon ?? '📎'}</span>
+          <span
+            className="w-[20px] h-[20px] rounded-full border border-white/80 inline-block"
+            style={{ backgroundColor: category?.color ?? DEFAULT_CATEGORY_COLOR }}
+          />
         )}
       </div>
 

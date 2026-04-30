@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { usePosts } from './PostsProvider'
 import type { Post } from '../types/data.d'
+import { DEFAULT_CATEGORY_COLOR } from '../lib/categoryColors'
 
 export default function PostDetailsDrawer() {
   const { posts, selectedPostId, setSelectedPostId, categories, collections, updatePost, deletePost } = usePosts()
@@ -71,7 +72,11 @@ export default function PostDetailsDrawer() {
           </svg>
         </button>
         <span className="font-mono text-sm text-vault-text2 flex-1">
-          {category?.icon ?? '📁'} {category?.name ?? ''}
+          <span
+            className="inline-block w-[12px] h-[12px] rounded-full border border-white/80 mr-2 align-middle"
+            style={{ backgroundColor: category?.color ?? DEFAULT_CATEGORY_COLOR }}
+          />
+          {category?.name ?? ''}
         </span>
         <button
           onClick={() => { editMode ? setEditMode(false) : setEditMode(true) }}
@@ -98,7 +103,10 @@ export default function PostDetailsDrawer() {
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           ) : (
-            <span className="text-5xl">{category?.icon ?? '📎'}</span>
+            <span
+              className="w-[32px] h-[32px] rounded-full border border-white/80 inline-block"
+              style={{ backgroundColor: category?.color ?? DEFAULT_CATEGORY_COLOR }}
+            />
           )}
         </div>
 
@@ -159,7 +167,7 @@ export default function PostDetailsDrawer() {
                 onChange={e => setLocal({ ...local, categoryId: e.target.value })}
               >
                 {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>

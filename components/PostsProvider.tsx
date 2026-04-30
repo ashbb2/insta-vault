@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { Post, Category, Collection } from '../types/data.d'
 import { posts as mockPosts, categories as mockCategories, collections as mockCollections } from './data/mockData'
 import { localRepo } from '../lib/repos/localStorageRepo'
+import { DEFAULT_CATEGORY_COLOR } from '../lib/categoryColors'
 
 type SortOption = 'newest' | 'oldest' | 'recently-edited'
 
@@ -24,7 +25,7 @@ type PostsContextValue = {
   setSearchText: (s: string) => void
   sortOption: SortOption
   setSortOption: (s: SortOption) => void
-  addCategory: (name: string, icon?: string) => Category
+  addCategory: (name: string, color?: string) => Category
   updateCategory: (id: string, updates: Partial<Category>) => void
   renameCategory: (id: string, name: string) => void
   deleteCategory: (id: string, reassignToId?: string) => boolean
@@ -33,6 +34,8 @@ type PostsContextValue = {
   deleteCollection: (id: string, reassignToId?: string) => boolean
   addOpen: boolean
   setAddOpen: (v: boolean) => void
+  addCategoryOpen: boolean
+  setAddCategoryOpen: (v: boolean) => void
   addModalCategoryId: string | null
   setAddModalCategoryId: (id: string | null) => void
 }
@@ -47,6 +50,7 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
   const [sortOption, setSortOption] = useState<SortOption>('newest')
   const [isHydrated, setIsHydrated] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false)
   const [addModalCategoryId, setAddModalCategoryId] = useState<string | null>(null)
 
   const [posts, setPosts] = useState<Post[]>(() => mockPosts)
@@ -58,16 +62,16 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
   // IDs from previous default data set that should no longer exist.
   const DEPRECATED_CATEGORY_IDS = new Set(['c-photo', 'c-food', 'c-design', 'c-travel'])
 
-  // Remove deprecated categories, backfill icons, and ensure all current mockCategories are present.
+  // Remove deprecated categories, backfill colors, and ensure all current mockCategories are present.
   function enrichCategories(loaded: Category[]): Category[] {
     const filtered = loaded.filter(cat => !DEPRECATED_CATEGORY_IDS.has(cat.id))
-    const withIcons = filtered.map(cat => ({
+    const withColors = filtered.map(cat => ({
       ...cat,
-      icon: cat.icon ?? mockCategories.find(m => m.id === cat.id)?.icon
+      color: cat.color ?? mockCategories.find(m => m.id === cat.id)?.color ?? DEFAULT_CATEGORY_COLOR
     }))
-    const loadedIds = new Set(withIcons.map(c => c.id))
+    const loadedIds = new Set(withColors.map(c => c.id))
     const missing = mockCategories.filter(m => !loadedIds.has(m.id))
-    return [...withIcons, ...missing]
+    return [...withColors, ...missing]
   }
 
   // Reassign any posts whose categoryId was removed by the migration.
@@ -199,11 +203,11 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     setPosts((s) => s.map((p) => (p.id === post.id ? post : p)))
   }
 
-  function addCategory(name: string, icon?: string) {
+  function addCategory(name: string, color?: string) {
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '')
     let id = `c-${slug}`
     if (categories.some((c) => c.id === id)) id = `c-${Date.now()}`
-    const cat: Category = { id, name, icon }
+    const cat: Category = { id, name, color: color ?? DEFAULT_CATEGORY_COLOR }
     setCategories((s) => [...s, cat])
     return cat
   }
@@ -283,6 +287,8 @@ export function PostsProvider({ children }: { children: React.ReactNode }) {
     setSortOption,
     addOpen,
     setAddOpen,
+    addCategoryOpen,
+    setAddCategoryOpen,
     addModalCategoryId,
     setAddModalCategoryId
   }

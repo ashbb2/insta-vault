@@ -2,17 +2,17 @@ import type { Post, Category, Collection } from '../../types/data.d'
 
 // Categories (Unsorted is the default catch-all)
 export const categories: Category[] = [
-  { id: 'c-unsorted',     name: 'Unsorted',     icon: '📋' },
-  { id: 'c-recipes',     name: 'Recipes',      icon: '🍳' },
-  { id: 'c-movies',      name: 'Movies',       icon: '🎬' },
-  { id: 'c-figma',       name: 'Figma',        icon: '◈' },
-  { id: 'c-vscode',      name: 'VS Code',      icon: '⌨' },
-  { id: 'c-claude',      name: 'Claude',       icon: '◆' },
-  { id: 'c-chatgpt',     name: 'ChatGPT',      icon: '◉' },
-  { id: 'c-toronto',     name: 'Toronto',      icon: '🏙' },
-  { id: 'c-cafes',       name: 'Cafes',        icon: '☕' },
-  { id: 'c-restaurants', name: 'Restaurants',  icon: '🍽' },
-  { id: 'c-homehacks',   name: 'Home Hacks',   icon: '🔧' },
+  { id: 'c-unsorted',     name: 'Unsorted',     color: '#9CA3AF' },
+  { id: 'c-recipes',      name: 'Recipes',      color: '#F97316' },
+  { id: 'c-movies',       name: 'Movies',       color: '#6366F1' },
+  { id: 'c-figma',        name: 'Figma',        color: '#8B5CF6' },
+  { id: 'c-vscode',       name: 'VS Code',      color: '#0EA5E9' },
+  { id: 'c-claude',       name: 'Claude',       color: '#EC4899' },
+  { id: 'c-chatgpt',      name: 'ChatGPT',      color: '#14B8A6' },
+  { id: 'c-toronto',      name: 'Toronto',      color: '#3B82F6' },
+  { id: 'c-cafes',        name: 'Cafes',        color: '#10B981' },
+  { id: 'c-restaurants',  name: 'Restaurants',  color: '#EF4444' },
+  { id: 'c-homehacks',    name: 'Home Hacks',   color: '#F59E0B' },
 ]
 
 export const collections: Collection[] = [

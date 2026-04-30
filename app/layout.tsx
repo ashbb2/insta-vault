@@ -1,15 +1,11 @@
-import { Instrument_Sans, JetBrains_Mono, Geist } from 'next/font/google'
+import { Instrument_Sans } from 'next/font/google'
 import type { Viewport } from 'next'
 import '../styles/globals.css'
 import AppShell from '../components/AppShell'
-import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
-
-const jetbrainsMono = JetBrains_Mono({
+const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
-  variable: '--font-mono',
-  weight: ['400', '500']
+  variable: '--font-sans-ui'
 })
 
 export const metadata = {
@@ -25,7 +21,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn(jetbrainsMono.variable, "font-sans", geist.variable)}>
+    <html lang="en" className={`${instrumentSans.variable} font-sans`}>
       <body className="font-sans bg-vault-bg">
         <AppShell>{children}</AppShell>
       </body>

@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react'
-import Button from './ui/Button'
+import { Button } from './ui/Button'
 import { usePosts } from './PostsProvider'
 
 export default function TopBar({ sidebarOpen, setSidebarOpen, onOpenAdd }: { sidebarOpen?: boolean; setSidebarOpen?: (v: boolean) => void; onOpenAdd?: () => void }) {
